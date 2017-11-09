@@ -1,6 +1,8 @@
 #+TITLE: Chapter1 Not Taking Payments on the Web(Yet)
 #+OPTIONS: ^:{}
 * Understanding the Data Model
+
+
 * Building the Shopping Cart Feature
 * Unit Testing Our Logic
 * Next Up
