@@ -1,0 +1,50 @@
+#+TITLE: Fat-Models(肥大化したモデル)
+#+OPTIONS: ^:{}
+
+* 肥大化した(ファット)モデル
+この章では、モデルの複雑さを新しいユニット(module,class)に移動することでシンプルにすることを扱う。
+
+#+BEGIN_SRC ruby
+# online storeアプリケーションのモデル
+class Order < ActiveRecord::Base
+  def self.find_purchased
+  end
+
+  def self.find_waiting_for_review
+  end
+
+  def self.find_waiting_for_sign_on
+  end
+
+  def self.find_waiting_for_sign_off
+  end
+
+  def self.advanced_search(fields, options = {})
+  end
+
+  def self.simple_search(terms)
+  end
+
+  def to_xml
+  end
+
+  def to_json
+  end
+
+  def to_csv
+  end
+
+  def to_pdf
+  end
+end
+#+END_SRC
+
+この章で主題とするのは、これらのメソッドの記述場所である。
+このような小さなモデルでさえ、手に負えなくなるのは簡単である。(モデルが1000行を超えるのはザラ)
+解決策として、まとまった関連性のあるメソッドをmoduleにしてしまうことが挙げられる。
+
+** 解決策: Delegateの新しいクラスへの責務
+
+** 解決策: moduleを使う
+
+** 解決策: 巨大な処理ブロックを減らす

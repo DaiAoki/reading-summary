@@ -1,0 +1,36 @@
+#+TITLE: AWS入門
+#+OPTIONS: ^:{}
+
+* 参考URL
+https://qiita.com/hiroshik1985/items/6433d5de97ac55fedfde
+
+* 構造
+#+BEGIN_SRC JSON
+{
+  Internet: {
+    AWS(AWS Cloud): {
+      VPC(Virtual Private Cloud): {
+        Elastic Load Balancing: {
+          Elastic Compute Cloud: {
+            AmazonRDS
+          },
+          Elastic Compute Cloud: {
+            AmazonRDS
+          }
+        }
+      }
+    }
+  }
+}
+#+END_SRC
+
+* AWS基本サービス
+|-----------------------------------+---------------------------------------------------------------------------------|
+| サービス                          | 概要                                                                            |
+|-----------------------------------+---------------------------------------------------------------------------------|
+| Elastic Compute Cloud(EC2)        | 仮想サーバ。スケーラブル。ここにアプリケーションを配置                          |
+| Relational Database Service (RDS) | データベース。MySQLやPostgreSQLなど選択可能。                                   |
+| Elastic Load Balancing (ELB)      | ロードバランサー。EC2インスタンス間でのトラフィックの負荷を分散。               |
+| Virtual Private Cloud (VPC)       | AWSクラウド上に論理的に分離されたプライベートなネットワークを構築できるサービス |
+|-----------------------------------+---------------------------------------------------------------------------------|
+

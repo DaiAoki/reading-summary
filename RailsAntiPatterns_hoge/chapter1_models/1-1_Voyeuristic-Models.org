@@ -1,0 +1,294 @@
+#+TITLE: Voyeuristic-Models(覗き見モデル)
+#+OPTIONS: ^:{}
+
+* 覗き見モデル
+Ruby on Railsを使用する場合、プログラマーはオブジェクト指向の基本的な信条を無視してアプリケーションを作成しかねない。
+
+** 解決策:デメテルの法則に従う
+ActiveRecordは、簡単にアソシエーションを築くことのできる。(Viewにおいても)
+しかし、強力であるがゆえにリファクタリングが面倒だったり、エラーになりがちである。
+ - 異なるモデルで機能的にカプセル化すること
+ - モデル内で小さなメソッドに分割すること
+
+#+BEGIN_SRC ruby
+# Model
+class Address < ActiveRecord::Base
+  belongs_to :customer
+end
+
+class Customer < ActiveRecord::Base
+  has_one :address
+  has_many :invoices
+end
+
+class Invoice < ActiveRecord::Base
+  belongs_to :customer
+end
+#+END_SRC
+
+#+BEGIN_SRC ruby
+# View
+= @invoice.customer.name
+= @invoice.customer.address.street
+= @invoice.customer.address.city
+= @invoice.customer.address.state
+= @invoice.customer.address.zip_code
+#+END_SRC
+
+簡単にアソシエーションを利用してモデルを行き来することができるがゆえに、
+上記のような理想的とはいえないコードが生成されることもある。
+
+1. カプセル化の観点から、customerから、addressオブジェクトのstreet属性に直接アクセスするべきでない。
+customerがbilling addressとshipping addressを持つようになった場合、上記のようなコードは全箇所修正を強いられる。
+
+この問題を解決するためには、デメテルの法則(必要最小限の知識の法則)に従う。
+直接関係のあるオブジェクトのメソッドしかコールしない。
+Railsでいうと、".演算子を一個しか使わない"ということ。
+#+BEGIN_SRC ruby
+# example
+# Bad case
+@invoice.customer.name
+# Good case
+@invoice.customer_name
+#+END_SRC
+
+この法則に従うと、下記のようにリファクタリングできる。
+#+BEGIN_SRC ruby
+# Model
+class Address < ActiveRecord::Base
+  belongs_to :customer
+end
+
+class Customer < ActiveRecord::Base
+  has_one :address
+  has_many :invoices
+
+  def street
+    address.street
+  end
+
+  def city
+    address.city
+  end
+
+  def state
+    address.state
+  end
+
+  def zip_code
+    address.zip_code
+  end
+end
+
+class Invoice < ActiveRecord::Base
+  belongs_to :customer
+
+  def customer_name
+    customer.name
+  end
+
+  def customer_street
+    customer.street
+  end
+
+  def customer_city
+    customer.city
+  end
+
+  def customer_state
+    customer.state
+  end
+
+  def customer_zip_code
+    customer.zip_code
+  end
+end
+#+END_SRC
+
+#+BEGIN_SRC ruby
+# View
+= @invoice.customer_name
+= @invoice.customer_street
+= @invoice.customer_city
+= @invoice.customer_state
+= @invoice.customer_zip_code
+#+END_SRC
+
+個別のラッパーメソッドにより、それぞれのメソッドを抽象化することに成功した。
+このアプローチの欠点は、クラスが数多くの小さなラッパーメソッドで溢れてしまうこと。
+変更があった場合、最初よりはマシだが、それでもこれらのラッパーメソッドをメンテナンスするのは面倒だ。
+
+さらに、Invoiceは関係のないメソッドに汚染されるという欠点もある。
+
+幸運なことにRailsは最初の心配事を解決する方法を持っている。
+それは、delegateメソッドである。
+delegateメソッドを使用して上記を書き換えると以下のようになる。
+
+#+BEGIN_SRC ruby
+# Model
+class Address < ActiveRecord::Base
+  belongs_to :customer
+end
+
+class Customer < ActiveRecord::Base
+  has_one :address
+  has_many :invoices
+
+  delegate :street, :city, :state, :zip_code, :to => :address
+end
+
+class Invoice < ActiveRecord::Base
+  belongs_to :customer
+
+  delegate :name,
+           :street,
+           :city,
+           :state,
+           :zip_code,
+           :to     => :customer,
+           :prefix => true
+end
+#+END_SRC
+Viewは前回と変更なし。
+#+BEGIN_SRC ruby
+# View
+= @invoice.customer_name
+= @invoice.customer_street
+= @invoice.customer_city
+= @invoice.customer_state
+= @invoice.customer_zip_code
+#+END_SRC
+
+** 解決策:Select系メソッドは全てモデルに書く
+Modelでない場所(例えば、ViewやController)にSelect系のメソッドを書くと、可読性とメンテナンス性が低下する。
+
+last_name順にUserの名前を表示するコードを書くときに、直接Viewに書くと以下のようになる。
+#+BEGIN_SRC haml
+!!!
+  %body
+    %ul
+      - User.find(:order => "last_name").each do |user|
+        %li = "#{user.last_name} #{user.first_name}"
+#+END_SRC
+これはMVCの原則に反している。
+MVCの原則に従うと、Controllerに書くべき。
+
+#+BEGIN_SRC ruby
+class UsersController < ApplicationController
+  def index
+    @users = User.order("last_name")
+  end
+end
+#+END_SRC
+
+#+BEGIN_SRC haml
+!!!
+  %body
+    %ul
+      - @users.each do |user|
+        %li = "#{user.last_name} #{user.first_name}"
+#+END_SRC
+
+さらにModelにorderedメソッドを定義する。
+#+BEGIN_SRC ruby
+class UsersController < ApplicationController
+  def index
+    @users = User.ordered
+  end
+end
+#+END_SRC
+
+#+BEGIN_SRC ruby
+class User < ActiveRecord::Base
+  def self.ordered
+    order("last_name")
+  end
+end
+#+END_SRC
+
+Modelに記述したこのようなロジックはscopeとして実装可能。
+#+BEGIN_SRC ruby
+class User < ActiveRecord::Base
+  scope :ordered, order("last_name")
+end
+#+END_SRC
+
+** 解決策:Select系メソッドはそれ自身のモデルに書く
+Select系メソッドをControllerからModelに移動するのはメンテナンス性の高いコードを生成する有効な手段である。
+よく犯しがちな過ちは、Select系メソッドをそのモデルに近いモデルに定義してしまうことである。
+
+まず、NG例から。
+#+BEGIN_SRC ruby
+class UsersController < ApplicationController
+  def index
+    @user = User.find(params[:id])
+    @membership =
+      @user.memberships.where(:active => true).
+                        limit(5).
+                        order("last_active_on DESC")
+  end
+end
+#+END_SRC
+
+Select系メソッドをModelに移動する。
+#+BEGIN_SRC ruby
+class UsersController < ApplicationController
+  def index
+    @user = User.find(params[:id])
+    @recent_active_memberships = @user.find_recent_active_memberships
+  end
+end
+#+END_SRC
+
+#+BEGIN_SRC ruby
+class User < ActiveRecord::Base
+  has_many :memberships
+
+  def find_recent_active_memberships
+    memberships.where(:active => true).
+                limit(5).
+                order("last_active_on DESC")
+  end
+end
+#+END_SRC
+
+これは明らかに改善といえるが、もっと改善することができる。
+Userモデルは、Membershipモデルのことを知りすぎている。
+アソシエーションを使用してさらに改良することが可能。
+#+BEGIN_SRC ruby
+class User < ActiveRecord::Base
+  has_many :memberships
+
+  def find_recent_active_memberships
+    memberships.find_recently_active
+  end
+end
+
+class Membership < ActiveRecord::Base
+  belongs_to :user
+
+  def self.find_recently_active
+    where(:active => true).limit(5).order("last_active_on DESC")
+  end
+end
+#+END_SRC
+
+これをscopeを使うと以下のようになる。
+#+BEGIN_SRC ruby
+class User < ActiceRecord::Base
+  has_many :memberships
+
+  def find_recently_active_memberships
+    memberships.only_active.order_by_activity.limit(5)
+  end
+end
+
+class Memberships < ActiveRecord::Base
+  belongs_to :user
+
+  scope :only_active,       where(:active => true)
+  scope :order_by_activity, order('last_active_on DESC')
+end
+#+END_SRC
+このアプローチはデメテルの法則に反するため、どんなリファクタリングをするかはあなた次第。
+
