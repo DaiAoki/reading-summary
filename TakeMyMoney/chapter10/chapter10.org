@@ -1,0 +1,6 @@
+#+TITLE: Chapter10 Reporting
+#+OPTIONS: ^:{}
+* Using ActiveAdmin Reporting
+* Rolling Your Own Data
+* Speeding Up Performance and Data Preparation
+* Next Up

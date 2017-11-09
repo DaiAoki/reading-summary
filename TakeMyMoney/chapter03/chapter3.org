@@ -1,0 +1,6 @@
+#+TITLE: Chapter3 Client-Side Payment Authentication
+#+OPTIONS: ^:{}
+* Setting Up Client-Side Stripe
+* Using the Token on the Server
+* Testing the JavaScript via Capybara
+* Next Up

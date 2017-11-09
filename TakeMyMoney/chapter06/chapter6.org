@@ -1,0 +1,8 @@
+#+TITLE: Chapter6 Subscriptions
+#+OPTIONS: ^:{}
+* Creating Subscription Plans
+* Creating Subscription Customers
+* Purchasing a Subscription
+* Setting Up Webhooks
+* Supporting the Stripe Subscription Life Cycle
+* Next Up

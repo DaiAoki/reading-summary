@@ -1,0 +1,6 @@
+#+TITLE: Chapter12 Third-Party Sales with Stripe Connect
+#+OPTIONS: ^:{}
+* Creating Affiliate Accounts
+* Transferring Payments to Affiliate Accounts
+* Validating Affiliates
+* Next Up

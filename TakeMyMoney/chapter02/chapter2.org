@@ -1,0 +1,7 @@
+#+TITLE: Chapter2 Take the Money
+#+OPTIONS: ^:{}
+* What's a Payment Gateway and Why Do I Need One?
+* Setting Up Our First Payment Gateway
+* Charging Cards with Server Authentication
+* Testing with the VCR Gem
+* Next Up

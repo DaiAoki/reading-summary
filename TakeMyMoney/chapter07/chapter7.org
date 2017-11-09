@@ -1,0 +1,6 @@
+#+TITLE: Chapter7 The Administration Experience
+#+OPTIONS: ^:{}
+* Using Stripe's Administration Dashboard
+* Setting Up Your Own Administrative Dashboard
+* Setting Up a Point of Purchase
+* Next Up

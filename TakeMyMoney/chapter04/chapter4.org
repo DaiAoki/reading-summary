@@ -1,0 +1,7 @@
+#+TITLE: Chapter4 PayPal
+#+OPTIONS: ^:{}
+* Setting Up a PayPal Account
+* Accepting PayPal Transactions
+* Handling the PayPal Callback
+* Developing PayPal Charges
+* Next Up
