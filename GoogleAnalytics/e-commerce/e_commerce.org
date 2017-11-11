@@ -1,0 +1,256 @@
+#+TITLE: 拡張eコマース
+#+OPTIONS: ^:{}
+* 概要
+analytics.js 向けの拡張 e コマース プラグインを使用すると、
+e コマースサイトで扱う商品とショッピング ユーザーとの接点
+（商品のインプレッション、商品のクリック、商品情報の表示、
+ショッピングカートへの商品の追加、決済プロセスの開始、トランザクション、払い戻しなど）
+を測定できる。
+
+* 拡張 e コマースデータの種類と操作
+analytics.jsで送ることのできるeコマースデータの種類
+- インプレッションデータ
+- 商品データ
+- プロモーションデータ
+- アクションデータ
+
+** インプレッションデータ
+= 表示された商品に関する情報
+impressionFieldObject
+＊各キーなどの説明は参考URL参照。
+
+** 商品データ
+= 表示されたかショッピングカートに追加された個々の商品
+productFieldObject
+
+** プロモーションデータ
+= 表示されたプロモーション
+promoFieldObject
+
+** アクションデータ
+= eコマースで発生したアクションに関する情報
+actionFieldObject
+
+** 商品アクションとプロモーションアクション
+= Google アナリティクスに送る商品データやプロモーション データをどのように解釈するかを指定
+
+* 実装
+** eコマースプラグインの読み込み
+#+BEGIN_SRC javascript
+ga('require', 'ec');
+#+END_SRC
+トラッカーオブジェクトを作成した後、かつ拡張eコマースの機能を使用する前に実行する必要がある。
+
+** 拡張eコマースデータの送信
+プラグインを読み込むことで、
+デフォルトのトラッカーに拡張eコマーストラッキング専用の新しいコマンドがいくつか追加され、
+eコマースデータを送信できるようになる。
+＊e コマースデータは既存のヒット（pageview や event など）に付加する形でのみ送信できる
+　=> まったくヒットを送らずにeコマースのコマンドを実行したり、
+　　 eコマースのコマンドの前にヒットを送信したりすると、e コマースデータは送信されない
+
+- eコマースアクティビティの測定
+- トランザクションの測定
+- 払い戻しの測定
+- 決済プロセスの測定
+- 社内プロモーションの測定
+
+** eコマースアクティビティの測定
+拡張eコマースの一般的な実装では、商品のインプレッションに加え、次のようなアクションを測定する。
+- 商品リンクのクリック
+- 商品情報の表示
+- 社内プロモーションのインプレッションとクリック
+- ショッピング カートへの商品の追加や削除
+- 商品の決済プロセスの開始
+- 購入と払い戻し
+
+** インプレッションの測定
+ec:addImpression
+インプレッション数 = (広告などの)表示回数
+＊ページビュー数とは微妙に異なる。
+#+BEGIN_SRC JavaScript
+// idとnameは必須
+ga('ec:addImpression', {            // Provide product details in an impressionFieldObject.
+  'id': 'P12345',                   // Product ID (string).
+  'name': 'Android Warhol T-Shirt', // Product name (string).
+  'category': 'Apparel/T-Shirts',   // Product category (string).
+  'brand': 'Google',                // Product brand (string).
+  'variant': 'Black',               // Product variant (string).
+  'list': 'Search Results',         // Product list (string).
+  'position': 1,                    // Product position (number).
+  'dimension1': 'Member'            // Custom dimension (string).
+});
+#+END_SRC
+
+** アクションの測定
+ec:addProduct
+発生しているアクションを測定する
+#+BEGIN_SRC JavaScript
+ga('ec:addProduct', {               // Provide product details in a productFieldObject.
+  'id': 'P12345',                   // Product ID (string).
+  'name': 'Android Warhol T-Shirt', // Product name (string).
+  'category': 'Apparel',            // Product category (string).
+  'brand': 'Google',                // Product brand (string).
+  'variant': 'Black',               // Product variant (string).
+  'position': 1,                    // Product position (number).
+  'dimension1': 'Member'            // Custom dimension (string).
+});
+
+ga('ec:setAction', 'click', {       // click action.
+  'list': 'Search Results'          // Product list (string).
+});
+#+END_SRC
+
+** インプレッションとアクションの併合
+上の二つをつなげただけ。
+#+BEGIN_SRC JavaScript
+// The impression from a Related Products section.
+ga('ec:addImpression', {            // Provide product details in an impressionFieldObject.
+  'id': 'P12345',                   // Product ID (string).
+  'name': 'Android Warhol T-Shirt', // Product name (string).
+  'category': 'Apparel/T-Shirts',   // Product category (string).
+  'brand': 'Google',                // Product brand (string).
+  'variant': 'Black',               // Product variant (string).
+  'list': 'Related Products',       // Product list (string).
+  'position': 1                     // Product position (number).
+});
+
+// The product being viewed.
+ga('ec:addProduct', {                 // Provide product details in an productFieldObject.
+  'id': 'P67890',                     // Product ID (string).
+  'name': 'YouTube Organic T-Shirt',  // Product name (string).
+  'category': 'Apparel/T-Shirts',     // Product category (string).
+  'brand': 'YouTube',                 // Product brand (string).
+  'variant': 'gray',                  // Product variant (string).
+  'position': 2                       // Product position (number).
+});
+
+ga('ec:setAction', 'detail');       // Detail action.
+#+END_SRC
+
+** トランザクションの測定
+ec:setAction
+トランザクションを測定するには、
+ec:setAction コマンドを使用してアクションタイプをpurchaseに設定する。
+#+BEGIN_SRC JavaScript
+ga('ec:addProduct', {               // Provide product details in an productFieldObject.
+  'id': 'P12345',                   // Product ID (string).
+  'name': 'Android Warhol T-Shirt', // Product name (string).
+  'category': 'Apparel',            // Product category (string).
+  'brand': 'Google',                // Product brand (string).
+  'variant': 'black',               // Product variant (string).
+  'price': '29.20',                 // Product price (currency).
+  'coupon': 'APPARELSALE',          // Product coupon (string).
+  'quantity': 1                     // Product quantity (number).
+});
+
+ga('ec:setAction', 'purchase', {          // Transaction details are provided in an actionFieldObject.
+  'id': 'T12345',                         // (Required) Transaction id (string).
+  'affiliation': 'Google Store - Online', // Affiliation (string).
+  'revenue': '37.39',                     // Revenue (currency).
+  'tax': '2.85',                          // Tax (currency).
+  'shipping': '5.34',                     // Shipping (currency).
+  'coupon': 'SUMMER2013'                  // Transaction coupon (string).
+});
+#+END_SRC
+
+** 払い戻しの測定
+1件のトランザクションすべてを払い戻すには、次のようにrefundアクションを設定してトランザクションIDを指定する。
+#+BEGIN_SRC JavaScript
+// Refund an entire transaction.
+ga('ec:setAction', 'refund', {
+  'id': 'T12345'    // Transaction ID is only required field for full refund.
+});
+#+END_SRC
+
+部分的な払い戻しを測定するには、次のようにrefundアクションを設定し、
+払い戻しの対象となるトランザクション ID、商品 ID、商品数を指定する。
+#+BEGIN_SRC JavaScript
+// Refund a single product.
+ga('ec:addProduct', {
+  'id': 'P12345',       // Product ID is required for partial refund.
+  'quantity': 1         // Quantity is required for partial refund.
+});
+
+ga('ec:setAction', 'refund', {
+  'id': 'T12345',       // Transaction ID is required for partial refund.
+});
+#+END_SRC
+
+** 払い戻しで非インタラクションイベントを使用する場合
+#+BEGIN_SRC JavaScript
+ga('send', 'event', 'Ecommerce', 'Refund', {'nonInteraction': 1});
+#+END_SRC
+
+** 決済プロセスの測定(TODO!!!)
+決済プロセスの各ステップを測定する手順は次のとおり
+1. 決済プロセスの各ステップを測定するトラッキングコードを追加
+2. 必要に応じて、決済オプションを測定するトラッキングコードを追加
+3. オプションとして、管理画面の [アナリティクス設定] の [e コマースの設定] で、決済目標到達プロセスのレポートに表示するわかりやすいステップ名を設定します。
+
+*** 決済ステップの測定
+決済プロセスの各ステップを測定するには、
+そのためのトラッキングコードを各ステップに実装し、Google アナリティクスにデータを送る必要がある。
+
+**** Stepフィールド
+測定の対象とする決済ステップには、必ずstep値を含める。
+この値は、[e コマースの設定] で指定した各ステップのラベル（名前）と決済アクションを結び付けるために使われる。
+
+**** Optionフィールド
+個々の決済ステップを測定するには、商品ごとに ec:addProduct を使用して
+ec:setActionで決済（checkout）であることを示す。
+また、必要に応じてec:setActionで別のactionFieldObjectを使ってstepとoptionで決済ステップの説明を付加する。
+
+**** 個々の決済ステップの測定
+（サンプル）決済ステップの最初のステップ
+＊1 個の商品と、お支払い方法に関する追加情報
+#+BEGIN_SRC JavaScript
+ga('ec:addProduct', {               // Provide product details in an productFieldObject.
+  'id': 'P12345',                   // Product ID (string).
+  'name': 'Android Warhol T-Shirt', // Product name (string).
+  'category': 'Apparel',            // Product category (string).
+  'brand': 'Google',                // Product brand (string).
+  'variant': 'black',               // Product variant (string).
+  'price': '29.20',                 // Product price (currency).
+  'quantity': 1                     // Product quantity (number).
+});
+
+// Add the step number and additional info about the checkout to the action.
+ga('ec:setAction','checkout', {
+    'step': 1,
+    'option': 'Visa'
+});
+#+END_SRC
+
+*** 決済オプションの測定
+決済オプションを使用すると、決済に関する追加情報を測定できる。
+この機能は、最初のページビューで決済ステップを測定した後で、
+同じ決済ステップの別のオプションが指定され、追加情報が出た場合に便利。
+たとえば、ユーザーが選択した配送方法を情報として追加できる。
+決済オプションを測定するには、ec:setAction で決済オプション（checkout_option）であることを示し、ステップ番号とオプションの説明を含める。
+#+BEGIN_SRC JavaScript
+// (On "Next" button click)
+ga('ec:setAction', 'checkout_option', {'step': 2, 'option': 'FedEx'});
+
+ga('send', 'event', 'Checkout', 'Option', {
+    hitCallback: function() {
+      // advance to next page
+});
+#+END_SRC
+
+*** 決済目標到達プロセスの設定
+Google アナリティクスの管理画面の[アナリティクス設定]で対象のビュー（旧プロファイル）を選択して[e コマースの設定] をクリックする。
+表示されるeコマースの設定手順に従って、測定する個々の決済ステップに名前を設定します。
+
+** 社内プロモーションの測定
+現状、PJTで使用する予定ない。
+
+* 完全なサンプルコード
+参考URL参照
+
+* 参考URL
+サイトに analytics.js を追加する
+https://developers.google.com/analytics/devguides/collection/analyticsjs/
+
+拡張 e コマース
+https://developers.google.com/analytics/devguides/collection/analyticsjs/enhanced-ecommerce
