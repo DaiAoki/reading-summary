@@ -1,3 +1,208 @@
 #+TITLE: git
 #+OPTIONS: ^:{}
-* 
+* 頻出コマンド
+** git init
+リポジトリ初期化
+#+BEGIN_SRC git init
+git init
+#+END_SRC
+
+** git branch
+localブランチ確認
+#+BEGIN_SRC git branch
+git branch
+#+END_SRC
+
+remoteブランチ確認
+#+BEGIN_SRC git branch -r
+git branch -r
+#+END_SRC
+
+local/remoteブランチ確認
+#+BEGIN_SRC git branch -a
+git branch -a
+#+END_SRC
+
+branchの削除
+#+BEGIN_SRC git branch -D
+git branch -D hoge-branch
+#+END_SRC
+
+branch名変更
+#+BEGIN_SRC git branch -m
+git branch -m hoge-branch
+#+END_SRC
+
+remoteブランチをlocalへ
+#+BEGIN_SRC git branch hoge-branch origin/hoge-branch
+git branch hoge-branch origin/hoge-branch
+#+END_SRC
+
+** git checkout
+ブランチの切り替え
+#+BEGIN_SRC git checkout hoge-branch
+git checkout hoge-branch
+#+END_SRC
+
+指定したブランチからチェックアウト
+#+BEGIN_SRC git checkout
+git checkout to-branch from-branch
+#+END_SRC
+
+ブランチ作成+切り替え
+#+BEGIN_SRC git checkout -b hoge-branch
+git checkout -b hoge-branch
+#+END_SRC
+
+個別にファイルの変更を取り消す
+#+BEGIN_SRC git checkout
+git checkout hoge.rb
+#+END_SRC
+
+すべての変更を取り消す
+#+BEGIN_SRC git checkout .
+git checkout .
+#+END_SRC
+
+** git add/commit/push
+指定のファイルをインデックスに追加
+#+BEGIN_SRC git add
+git add hoge.rb
+#+END_SRC
+
+変更を含むすべてのファイルをインデックスに追加
+#+BEGIN_SRC git add -A
+git add -A
+#+END_SRC
+
+変更を確認しながらインデックスに追加
+#+BEGIN_SRC git add -p
+git add -p
+#+END_SRC
+
+変更をコミット
+#+BEGIN_SRC git commit
+git commit
+#+END_SRC
+
+コミットメッセージを指定して変更をコミット
+#+BEGIN_SRC git commit -m
+git commit -m
+#+END_SRC
+
+localブランチをremoteに反映
+#+BEGIN_SRC git push
+git push --set-upstream origin hoge-branch
+# 省略可能
+git push -u origin hoge-branch
+# カレントブランチと同名でremoteにpushする場合以下でOK
+git push origin head
+# 二度目以降はgit pushのみで可能
+git push
+#+END_SRC
+
+** git fetch/pull
+ブランチを一括取得
+#+BEGIN_SRC git fetch
+git fetch
+#+END_SRC
+
+remoteブランチの変更を取り込む
+#+BEGIN_SRC git pull
+git pull
+#+END_SRC
+
+** git merge
+ブランチをmergeする
+#+BEGIN_SRC git merge
+git merge
+#+END_SRC
+
+** git rebase
+過去に遡ってマージする
+#+BEGIN_SRC git rebase
+git rebase hoge-branch
+# 変更内容の確認
+git reset --soft HEAD^
+git status
+# git commit -m としてしまうとコミットメッセージを上書きしてしまうため-mオプションはつけない
+git commit
+# 競合した場合、commitではなく--continueとする
+git rebase --continue
+#+END_SRC
+
+** git reset
+全リセット
+#+BEGIN_SRC git reset --hard HEAD
+git reset --hard HEAD
+#+END_SRC
+
+特定のコミットまで戻る
+#+BEGIN_SRC git reset --hard 1234567
+# コミットlogの確認
+git log --oneline
+ 1111111 hogehoge
+ 2222222 barbar
+ 3333333 foofoo
+# git reflogも見やすい
+git reflog
+ 1111111 HEAD@{0}: commit: hogehoge
+ 2222222 HEAD@{1}: commit: barbar
+ 3333333 HEAD@{2}: commit: foofoo
+# 戻りたいコミットを指定してreset
+git reset --hard 3333333
+ HEAD is now at 3333333 foofoo
+# 戻っていることを確認
+git log --oneline
+ 3333333 foofoo
+#+END_SRC
+
+** git log
+コミットlogの確認
+#+BEGIN_SRC git log --oneline
+git log --oneline
+ 1111111 hogehoge
+ 2222222 barbar
+ 3333333 foofoo
+#+END_SRC
+
+特定のブランチのログを確認
+#+BEGIN_SRC git log hoge-branch
+git log hoge-branch
+#+END_SRC
+
+* 便利コマンド
+変更箇所を効率良くみる
+#+BEGIN_SRC git diff --color-words
+git diff --color-words
+#+END_SRC
+
+commit を一つにまとめてmergeする
+#+BEGIN_SRC git merge --squash hoge-branch
+git checkout to-branch
+git merge --squash from-brach
+git commit -m "hogehoge"
+#+END_SRC
+
+* 応用コマンド
+** ベースブランチに大幅な変更が加わる場合のrebase
+1. 変更履歴番号を調べる(ベースからチェックアウトした番号)
+git reflog
+
+2. 遡る
+git reset --soft 番号
+
+3. チェックアウト時点からの変更分を退避
+git stash
+
+4. ハードリセット
+git reset --hard 番号(新たにrebaseするブランチとチェックアウト元ブランチで差異がない場所の番号)
+
+5. rebaseする
+git rebase ブランチ名
+
+6. 退避しておいた変更分を加える
+git stash pop
+
+7. commitする
+git commit -m "message"
